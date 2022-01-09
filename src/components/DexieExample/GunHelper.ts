@@ -52,6 +52,7 @@ export class GunDexie<ItfRow> {
 
   private mapOnCallback(row:ItfDixieGunTable<ItfRow>, idx: string){
     if (this.eliminateRepeatingNotifications(row)){return;}
+    this.doSyncGunToDexie(row,idx)
     this.callnack(row, idx)
   }
   constructor(txTable: Dexie.Table<ItfRow, string>, gunStore: ReturnType<typeof gun.get>, 
@@ -77,18 +78,23 @@ export class GunDexie<ItfRow> {
     this.gunStore.get(key).put(r)
   }
 
-  async put(row: ItfDixieGunTable<ItfRow>, key: string, keepLastModified = false): Promise<void> {
+  async put(row: ItfDixieGunTable<ItfRow>, key: string, 
+      keepLastModified = false, doNotImportDixie=false): Promise<void> {
     if (!keepLastModified) {
       (row).lastModeified = uuidv4()
     }
-    (row).sessionId = this.sessionId
-    await this.dxTable.put(row, key)
+    row.sessionId = this.sessionId
+    if (!doNotImportDixie){
+      await this.dxTable.put(row, key)
+    }
+    
     this.gunStore.get(key).put(row)
 
   }
 
   private async deleteDxByKey(key: string): Promise<void>{
-    const dxRow=await this.dxTable.get(key) as unknown as ItfDixieGunTable<ItfRow>    
+    const dxRow=await this.dxTable.get(key) as unknown as ItfDixieGunTable<ItfRow>   
+    debugger; 
     dxRow.deleted = true 
     await this.put(dxRow,key)
   }
@@ -113,6 +119,13 @@ export class GunDexie<ItfRow> {
     }
   }
 
+  async importCurrentDixieTableToGun(): Promise<void>{
+    const all=await this.dxTable.toArray();
+    for (let i=0;i<all.length;i++){
+      await this.put(all[i],all[i].key,true, true)
+    }
+
+  }
 
   syncGunToDexie(): void {
     this.gunStore.map(async (row: ItfDixieGunTable<ItfRow>, key: string) => {

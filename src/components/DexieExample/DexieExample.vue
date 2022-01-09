@@ -7,17 +7,16 @@
     <button v-if="!isSyncDefined" @click="doDefineSync">Start Gun</button>
     <div v-if="isSyncDefined">
       <p>
-        Since every node rollup its own changes, no consistency among nodes
-        guaranteed <br />
-        Send replica to all, to set current replica as source of truth, <br />
-        and other nodes will re-rollup on top of that <br />
+          If you want to recreate the Gun Store, or import a new store
       </p>
       <p>
-        <button @click="sendReplicaToall">Send replica to all</button>
+        <button @click="importCurrentDixieTableToGun">
+          Import current DixieTable to Gun
+        </button>
       </p>
     </div>
 
-    <FriendsList v-if="isSyncDefined" />
+    <FriendsList v-if="isSyncDefined" ref="friendsListRef" />
   </div>
 </template>
 <script lang="ts">
@@ -29,7 +28,7 @@ export default defineComponent({
   props: {},
   components: { FriendsList },
   setup() {
-
+    const friendsListRef=ref()
     const isIpfsReady = ref(false);
     const isSyncDefined = ref(false);
     const syncUrl = ref("");
@@ -51,18 +50,10 @@ export default defineComponent({
       isSyncDefined.value = true;
       syncUrl.value = "";
 
-//paste.oninput = () => { copy.put(paste.value) };
-
-
-      /*
-    copy.on((data) => { paste.value = data });
-        
-
-      };
-    */
     };
-    const sendReplicaToall = async () => {
-      //
+    const importCurrentDixieTableToGun = async () => {
+      friendsListRef.value.importCurrentDixieTableToGun();
+      
     };
     onMounted(doOnMounted);
 
@@ -73,7 +64,8 @@ export default defineComponent({
       syncUrl,
       orbitdbUrlToOpen,
       isIpfsReady,
-      sendReplicaToall,
+      importCurrentDixieTableToGun,
+      friendsListRef,
     };
   },
 });

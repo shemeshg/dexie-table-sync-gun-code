@@ -27,7 +27,7 @@ export default defineComponent({
     const friendAddComponentRef = ref();
 
     const frendslistAry: Ref<ItfDixieGunTable<Friend>[]> = ref([]);
-    const tbStore = gun.get("db-998135").get("fiends");
+    const tbStore = gun.get("db-998138").get("fiends");
     const dexieGunFriends = new GunDexie<Friend>(db.friends, tbStore);
 
     const refreshListvie = async () => {
@@ -77,6 +77,11 @@ export default defineComponent({
       friendAddComponentRef.value.resetForm();
     };
 
+    const importCurrentDixieTableToGun=async()=>{
+      debugger;
+      await dexieGunFriends.importCurrentDixieTableToGun()
+    }
+
     const runTest = () => {
       debugger;
     };
@@ -90,6 +95,7 @@ export default defineComponent({
       doOnMounted,
       frendslistAry,
       runTest,
+      importCurrentDixieTableToGun
     };
   },
 });
