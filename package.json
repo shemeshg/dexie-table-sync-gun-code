@@ -14,6 +14,7 @@
     "dexie-export-import": "^1.0.3",
     "dexie-observable": "^3.0.0-beta.11",
     "dexie-syncable": "^3.0.0-beta.10",
+    "gun": "^0.2020.1235",
     "ipfs": "^0.61.0",
     "ipfs-core": "^0.13.0",
     "ipfs-core-types": "^0.9.0",

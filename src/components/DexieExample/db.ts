@@ -13,7 +13,7 @@ export interface Friend {
 export class MySubClassedDexie extends Dexie {
   // 'friends' is added by dexie when declaring the stores()
   // We just tell the typing system this is the case
-  friends!: Dexie.Table<Friend, number>; // number = type of the primkey 
+  friends!: Dexie.Table<Friend, string>; // number = type of the primkey 
 
   constructor() {
     super('myDatabase');
