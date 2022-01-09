@@ -1,8 +1,6 @@
 import Dexie from "dexie";
 import Gun from "gun";
-import { Friend, db } from "./db";
 import { v4 as uuidv4 } from 'uuid';
-import { TrackOpTypes } from "vue";
 
 export const gun = Gun([
   "https://gun-manhattan.herokuapp.com/gun",
@@ -26,14 +24,25 @@ export function mapOnce(gunGet: ReturnType<typeof gun.get>): Promise<unknown> {
   });
 }
 
+export type ItfDixieGunTable<T> = T & {  
+  lastModeified: string;
+  sessionId: string
+  deleted: boolean  
+  key: string
+  oid: string
+};
+
 export class GunDexie<ItfRow> {
-  dxTable: Dexie.Table<ItfRow, string>
+
+
+  dxTable: Dexie.Table<ItfDixieGunTable<ItfRow>, string>
   gunStore: ReturnType<typeof gun.get>
   sessionId = uuidv4()
-  callnack= (row:any, idx: any):void=>{return;}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  callnack= (row:ItfDixieGunTable<ItfRow> , idx: string):void=>{return;}
   lastModifiedNotifications:string[]=[]
 
-  private eliminateRepeatingNotifications(row: any){
+  private eliminateRepeatingNotifications(row: ItfDixieGunTable<ItfRow>){
     if(this.lastModifiedNotifications.indexOf(row.lastModeified)>-1){return true;}
     if(this.lastModifiedNotifications.length > 100){this.lastModifiedNotifications = []}
     this.lastModifiedNotifications.push(row.lastModeified)
@@ -41,24 +50,25 @@ export class GunDexie<ItfRow> {
     return false
   }
 
-  private mapOnCallback(row:any, idx: any){
+  private mapOnCallback(row:ItfDixieGunTable<ItfRow>, idx: string){
     if (this.eliminateRepeatingNotifications(row)){return;}
     this.callnack(row, idx)
   }
   constructor(txTable: Dexie.Table<ItfRow, string>, gunStore: ReturnType<typeof gun.get>, 
     ) {
-    this.dxTable = txTable
+    this.dxTable = txTable as unknown as Dexie.Table<ItfDixieGunTable<ItfRow>, string>
     this.gunStore = gunStore
 
   }
 
-  setCallback(callnack=(row:any, idx: any):void=>{return;}){
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setCallback(callnack=(row:ItfDixieGunTable<ItfRow>, idx: string):void=>{return;}): void{
     this.callnack = callnack;
-
-    this.gunStore.map().on((row, idx)=>{this.mapOnCallback.call(this,row, idx) })
+    this.gunStore.map().on((row, idx)=>{this.mapOnCallback.call(this,row, idx as string) })
   }
-  async add(row: ItfRow | unknown) {
-    const r = row as any
+
+  async add(row:ItfRow): Promise<void> {
+    const r = row as unknown as ItfDixieGunTable<ItfRow>
     r.lastModeified = uuidv4()
     r.sessionId = this.sessionId
     r.deleted = false;
@@ -67,7 +77,7 @@ export class GunDexie<ItfRow> {
     this.gunStore.get(key).put(r)
   }
 
-  async put(row: any, key: string, keepLastModified = false) {
+  async put(row: ItfDixieGunTable<ItfRow>, key: string, keepLastModified = false): Promise<void> {
     if (!keepLastModified) {
       (row).lastModeified = uuidv4()
     }
@@ -77,23 +87,22 @@ export class GunDexie<ItfRow> {
 
   }
 
-  private async deleteDxByKey(key: string){
-    const dxRow: any=await this.dxTable.get(key) as any
+  private async deleteDxByKey(key: string): Promise<void>{
+    const dxRow=await this.dxTable.get(key) as unknown as ItfDixieGunTable<ItfRow>    
     dxRow.deleted = true 
     await this.put(dxRow,key)
   }
 
-  async delete(key: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async delete(key: string): Promise<void> {
     await this.deleteDxByKey(key)
     this.gunStore.get(key).put({ deleted: true, lastModeified: uuidv4() })
 
   }
 
-  async doSyncGunToDexie(row: any, key: string){
+  async doSyncGunToDexie(row: ItfDixieGunTable<ItfRow>, key: string): Promise<void>{
     if ((row).sessionId === this.sessionId) { return; }
 
-    const dxRow: any = await this.dxTable.get((row).oid)
+    const dxRow = await this.dxTable.get((row).oid) as unknown as ItfDixieGunTable<ItfRow>
     if (!dxRow){
       await this.put(row, key, true)
       return;
@@ -105,8 +114,8 @@ export class GunDexie<ItfRow> {
   }
 
 
-  syncGunToDexie() {
-    this.gunStore.map(async (row: any, key: string) => {
+  syncGunToDexie(): void {
+    this.gunStore.map(async (row: ItfDixieGunTable<ItfRow>, key: string) => {
  
       this.doSyncGunToDexie(row, key)
     });

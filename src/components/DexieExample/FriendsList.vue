@@ -14,7 +14,7 @@
 <script lang="ts">
 import FriendAdder from "@/components/DexieExample/FriendAdder.vue"; // @ is an alias to /src
 import { defineComponent, ref, onMounted, Ref } from "vue";
-import { GunDexie, gun } from "./GunHelper";
+import { GunDexie, gun, ItfDixieGunTable } from "./GunHelper";
 import { Friend, db } from "./db";
 
 export default defineComponent({
@@ -25,21 +25,24 @@ export default defineComponent({
   setup() {
     const addStatus = ref("");
     const friendAddComponentRef = ref();
-    const frendslistAry: Ref<Friend[]> = ref([]);
-    const tbStore = gun.get("db-998135").get("fiends");
-    const dexieGunFriends = new GunDexie<Friend>(
-      db.friends,
-      tbStore,
-    );
 
-    dexieGunFriends.setCallback(async (row:any, key: any)=>{
-      debugger;
-      await dexieGunFriends.doSyncGunToDexie(row, key)
+    const frendslistAry: Ref<ItfDixieGunTable<Friend>[]> = ref([]);
+    const tbStore = gun.get("db-998135").get("fiends");
+    const dexieGunFriends = new GunDexie<Friend>(db.friends, tbStore);
+
+    const refreshListvie = async () => {
       frendslistAry.value = await dexieGunFriends.dxTable.toArray();
-      frendslistAry.value = frendslistAry.value.filter((row)=>{return (row as any).deleted === false})
-      console.log(frendslistAry.value)
-      debugger;
-    })
+      frendslistAry.value = frendslistAry.value.filter((row) => {
+        return row.deleted === false;
+      });
+    };
+
+    dexieGunFriends.setCallback(
+      async (row: ItfDixieGunTable<Friend>, key: string) => {
+        await dexieGunFriends.doSyncGunToDexie(row, key);
+        refreshListvie()
+      }
+    );
 
     const friendAdd = async (params: Friend) => {
       addStatus.value = "";
@@ -55,8 +58,7 @@ export default defineComponent({
           successfully added. Got id ${id}`;
 
         friendAddComponentRef.value.resetForm();
-        frendslistAry.value = await dexieGunFriends.dxTable.toArray();
-        frendslistAry.value = frendslistAry.value.filter((row)=>{return (row as any).deleted === false})
+        refreshListvie()
       } catch (error) {
         addStatus.value = `Failed to add
           ${params.name}: ${error}`;
@@ -64,23 +66,19 @@ export default defineComponent({
     };
 
     const doOnMounted = async () => {
-      frendslistAry.value = await dexieGunFriends.dxTable.toArray();
-      frendslistAry.value = frendslistAry.value.filter((row)=>{return (row as any).deleted === false})
-      //
+      refreshListvie()
     };
 
     const delItem = async (id: string) => {
       await dexieGunFriends.delete(id);
-      frendslistAry.value = await dexieGunFriends.dxTable.toArray();
-      frendslistAry.value = frendslistAry.value.filter((row)=>{return (row as any).deleted === false})
+      refreshListvie()
       addStatus.value = `Deleted ${id}`;
 
-        friendAddComponentRef.value.resetForm();
-      debugger
+      friendAddComponentRef.value.resetForm();
     };
 
     const runTest = () => {
-      dexieGunFriends.syncGunToDexie();
+      debugger;
     };
     onMounted(doOnMounted);
 
