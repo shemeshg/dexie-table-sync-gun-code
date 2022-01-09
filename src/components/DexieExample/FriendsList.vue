@@ -28,6 +28,7 @@ export default defineComponent({
 
     const frendslistAry: Ref<ItfDixieGunTable<Friend>[]> = ref([]);
     const tbStore = gun.get("db-998138").get("fiends");
+    
     const dexieGunFriends = new GunDexie<Friend>(db.friends, tbStore);
 
     const refreshListvie = async () => {
@@ -78,7 +79,6 @@ export default defineComponent({
     };
 
     const importCurrentDixieTableToGun=async()=>{
-      debugger;
       await dexieGunFriends.importCurrentDixieTableToGun()
     }
 
