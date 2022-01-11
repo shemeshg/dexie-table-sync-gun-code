@@ -14,7 +14,9 @@
 <script lang="ts">
 import FriendAdder from "@/components/DexieExample/FriendAdder.vue"; // @ is an alias to /src
 import { defineComponent, ref, onMounted, Ref } from "vue";
-import { GunDexie, gun, ItfDixieGunTable } from "./GunHelper";
+import {ItfDixieGunTable} from "./GunApp/GunDexieTable"
+
+import {gunApp} from "./GunApp/GunHelper"
 import { Friend, db } from "./db";
 
 export default defineComponent({
@@ -27,9 +29,8 @@ export default defineComponent({
     const friendAddComponentRef = ref();
 
     const frendslistAry: Ref<ItfDixieGunTable<Friend>[]> = ref([]);
-    const tbStore = gun.get("db-998138").get("fiends");
     
-    const dexieGunFriends = new GunDexie<Friend>(db.friends, tbStore);
+    const dexieGunFriends = gunApp.createStore<Friend>("friends",db.friends);
 
     const refreshListvie = async () => {
       frendslistAry.value = await dexieGunFriends.dxTable.toArray();
@@ -67,6 +68,7 @@ export default defineComponent({
     };
 
     const doOnMounted = async () => {
+
       refreshListvie()
     };
 
@@ -82,7 +84,8 @@ export default defineComponent({
       await dexieGunFriends.importCurrentDixieTableToGun()
     }
 
-    const runTest = () => {
+    const runTest = async () => {
+      await dexieGunFriends.setupEveryoneGroup()
       debugger;
     };
     onMounted(doOnMounted);

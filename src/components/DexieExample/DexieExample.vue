@@ -33,12 +33,14 @@
 <script lang="ts">
 import FriendsList from "@/components/DexieExample/FriendsList.vue"; // @ is an alias to /src
 import { defineComponent, ref, onMounted } from "vue";
-import { gunAuth } from "./GunHelper";
+
+import {gunApp} from "./GunApp/GunHelper"
 
 export default defineComponent({
   props: {},
   components: { FriendsList },
-  setup() {
+  setup() {    
+
     const friendsListRef = ref();
     const isIpfsReady = ref(false);
     const isSyncDefined = ref(false);
@@ -46,19 +48,19 @@ export default defineComponent({
     const gunStoreUser = ref("");
     const gunStorePassword = ref("");
     const doOnMounted = async () => {
-      isSyncDefined.value = gunAuth.isLoggedIn;
+      isSyncDefined.value = gunApp.gunAuth.isLoggedIn;
       isIpfsReady.value = true;
     };
 
     const doLogout = async () => {
-      gunAuth.gunLogout();
+      gunApp.gunAuth.gunLogout();
       isSyncDefined.value = false;
     };
 
     const doAuthenticate = async () => {
 
       try {
-        (await gunAuth.gunAuthUser(
+        (await gunApp.gunAuth.gunAuthUser(
           gunStoreUser.value,
           gunStorePassword.value
         )) as string;
@@ -77,7 +79,7 @@ export default defineComponent({
 
     const doRegisterUser = async () => {
       try {
-        (await gunAuth.gunRegisterUser(
+        (await gunApp.gunAuth.gunRegisterUser(
           gunStoreUser.value,
           gunStorePassword.value
         )) as string;
