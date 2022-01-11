@@ -1,4 +1,4 @@
-import Gun from "gun";
+import Gun, {SEA} from "gun";
 require("gun/sea");
 
 
@@ -9,25 +9,35 @@ function gunUserType(){
 export class GunAuth {
   gun: ReturnType<typeof Gun>
   user:  ReturnType<typeof gunUserType>
-  private _epriv=""
-  private _epub=""
+  private _priv=""
+  private _pub=""
 
   constructor( gun: ReturnType<typeof Gun>){
     this.gun = gun
     this.user = gun.user().recall({ sessionStorage: true });    
   }
 
-  get epriv(): string{
-    return this._epriv
+  get priv(): string{
+    return this._priv
   }
 
-  get epub(): string{
-    return this._epub
+  get pub(): string{
+    return this._pub
   }
 
   get isLoggedIn(): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this.user as any).is !== undefined
+  }
+
+  async decrypt(data: string):Promise<string>{
+    const str=await SEA.decrypt(data, this.priv) as string
+    return str
+  }
+
+  async encrypt(data: string, pub: string):Promise<string>{
+    const str=await SEA.encrypt(data, pub)
+    return str
   }
 
   gunLogout(): void {
@@ -63,11 +73,12 @@ export class GunAuth {
   }
 
   async gunAuthUser(username: string, password: string): Promise<unknown> {
-    debugger;
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = await this._gunAuthUser(username,password) as any
-    this._epriv = user.sea.epriv
-    this._epub = user.sea.epub
+    debugger;
+    this._priv = user.sea.priv
+    this._pub = user.sea.pub
     return user;
 
   }
