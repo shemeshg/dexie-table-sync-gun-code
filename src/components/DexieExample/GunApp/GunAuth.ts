@@ -35,8 +35,8 @@ export class GunAuth {
     return str
   }
 
-  async encrypt(data: string, pub: string):Promise<string>{
-    const str=await SEA.encrypt(data, pub)
+  async encrypt(data: string):Promise<string>{
+    const str=await SEA.encrypt(data, this.priv)
     return str
   }
 
