@@ -76,7 +76,7 @@ export class GunGroup {
         datarow[field]="#####"
       }      
     }  
-    
+    debugger;
     return datarow;  
   }
 

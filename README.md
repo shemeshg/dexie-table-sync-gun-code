@@ -2,6 +2,8 @@
 
 Sync dixie table to Gun
 
+https://shemeshg.github.io/dexie-table-sync-gun/
+
 ```
 import { GunApp } from "./GunApp/GunApp"
 export const gunApp=new GunApp("UnqueAppId128")

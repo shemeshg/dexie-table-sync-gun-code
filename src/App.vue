@@ -1,7 +1,6 @@
 <template>
   <div id="nav" v-if="ipfsLoaded">
-    <router-link to="/">Home</router-link> |
-    <router-link to="/DiexieExample">DiexieExample</router-link> |
+    <router-link to="/">DiexieExample</router-link> |
     <router-link to="/about">About</router-link>
   </div>
   <div  v-if="!ipfsLoaded">
