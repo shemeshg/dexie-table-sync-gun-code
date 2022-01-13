@@ -53,7 +53,7 @@ export class GunDexieTable<ItfRow> {
   }
 
   async setupEveryoneGroup(): Promise<void>{
-    await this.gunEveryoneGroup.createGroupKeys()
+    await this.gunEveryoneGroup.initGroup()
     const canUserAccessGroup =await this.gunEveryoneGroup.canUserAccessGroup()    
     console.log(canUserAccessGroup)  
     const ecryptedFields=this.gunEveryoneGroup.encryptFields
