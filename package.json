@@ -1,5 +1,5 @@
 {
-  "name": "dexie-sync-orbitdb",
+  "name": "dexie-table-sync-gun",
   "version": "0.1.0",
   "private": true,
   "scripts": {
