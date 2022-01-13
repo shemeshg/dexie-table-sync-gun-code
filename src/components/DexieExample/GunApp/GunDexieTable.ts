@@ -1,10 +1,10 @@
 import Dexie from "dexie";
-import Gun  from "gun";
+import Gun from "gun";
 import { v4 as uuidv4 } from 'uuid';
 import { GunAuth } from "./GunAuth";
 import { GunGroup } from "./GunGroup";
-import {gunGetType} from "./GunHelper"
- 
+import { gunGetType } from "./GunHelper"
+
 
 
 export type ItfDixieGunTable<T> = T & {
@@ -16,12 +16,14 @@ export type ItfDixieGunTable<T> = T & {
 };
 
 export class GunDexieTable<ItfRow> {
-  
+
 
   dxTable: Dexie.Table<ItfDixieGunTable<ItfRow>, string>
   private gunTableDataStore: ReturnType<typeof gunGetType>
   private gunGroupStore: ReturnType<typeof gunGetType>
   private gunEveryoneGroup: GunGroup
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private callbackCtx?: any
 
   private sessionId = uuidv4()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -30,13 +32,13 @@ export class GunDexieTable<ItfRow> {
 
   constructor(txTable: Dexie.Table<ItfRow, string>, gunStore: ReturnType<typeof gun.get>,
     gun: ReturnType<typeof Gun>, user: GunAuth, encryptedFields: string[]) {
-      this.dxTable = txTable as unknown as Dexie.Table<ItfDixieGunTable<ItfRow>, string>
-      this.gunTableDataStore = gunStore.get("data")
-      this.gunGroupStore = gunStore.get("group")
-      this.gunEveryoneGroup = new GunGroup(this.gunGroupStore, user, encryptedFields)      
+    this.dxTable = txTable as unknown as Dexie.Table<ItfDixieGunTable<ItfRow>, string>
+    this.gunTableDataStore = gunStore.get("data")
+    this.gunGroupStore = gunStore.get("group")
+    this.gunEveryoneGroup = new GunGroup(this.gunGroupStore, user, encryptedFields)
 
-  
-    }
+
+  }
 
   private eliminateRepeatingNotifications(row: ItfDixieGunTable<ItfRow>) {
     if (this.lastModifiedNotifications.indexOf(row.lastModeified) > -1) { return true; }
@@ -46,55 +48,30 @@ export class GunDexieTable<ItfRow> {
     return false
   }
 
-  private mapOnCallback(row: ItfDixieGunTable<ItfRow>, idx: string) {
+  private async mapOnCallback(row: ItfDixieGunTable<ItfRow>, idx: string) {
     if (this.eliminateRepeatingNotifications(row)) { return; }
-    this.doSyncGunToDexie(row, idx)
-    this.callnack(row, idx)
+    await this.doSyncGunToDexie(row, idx)
+    this.callnack.call(this.callbackCtx, row, idx as string)
   }
 
-  async setupEveryoneGroup(): Promise<void>{
-    await this.gunEveryoneGroup.initGroup()
-    const canUserAccessGroup =await this.gunEveryoneGroup.canUserAccessGroup()    
-    console.log(canUserAccessGroup)  
-    const ecryptedFields=this.gunEveryoneGroup.encryptedFields
 
-    //write example
-    const datarow: { [id: string]: string; }={"shalom":"98",title:"wqe"}
-    for (let i=0;i<ecryptedFields.length;i++){
-      const field=ecryptedFields[i]
-      if (canUserAccessGroup){
-        datarow[field]=await this.gunEveryoneGroup.encrypt(datarow[field]) as string
-      } else {
-        delete datarow[field]
-      }
-    }
-    debugger;
-    //Read example    
-    
-    for (let i=0;i<ecryptedFields.length;i++){
-      const field=ecryptedFields[i]
-      if (canUserAccessGroup){
-        datarow[field]=await this.gunEveryoneGroup.decrypt(datarow[field]) as string
-      } else {
-        datarow[field]="#####"
-      }      
-    }
-    debugger;
-  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setCallback(callnack = (row: ItfDixieGunTable<ItfRow>, idx: string): void => { return; }): void {
+  async setCallback(callnack = (row: ItfDixieGunTable<ItfRow>, idx: string): void => { return; }, callbackCtx: unknown): Promise<void> {
+    await this.gunEveryoneGroup.initGroup()
+    this.callbackCtx = callbackCtx
     this.callnack = callnack;
     this.gunTableDataStore.map().on((row: ItfDixieGunTable<ItfRow>, idx: string) => { this.mapOnCallback.call(this, row, idx as string) })
   }
 
   async add(row: ItfRow): Promise<void> {
-    const r = row as unknown as ItfDixieGunTable<ItfRow>
+    let r = row as unknown as ItfDixieGunTable<ItfRow>
     r.lastModeified = uuidv4()
     r.sessionId = this.sessionId
     r.deleted = false;
     const key = await this.dxTable.add(r)
     r.key = key
+    r = await this.gunEveryoneGroup.writeDatarow(r as unknown as { [id: string]: string; }) as unknown as ItfDixieGunTable<ItfRow>
     this.gunTableDataStore.get(key).put(r)
   }
 
@@ -108,32 +85,35 @@ export class GunDexieTable<ItfRow> {
       await this.dxTable.put(row, key)
     }
 
-    this.gunTableDataStore.get(key).put(row)
-
+    const r = await this.gunEveryoneGroup.writeDatarow(row as unknown as { [id: string]: string; })
+    this.gunTableDataStore.get(key).put(r)
   }
 
   private async deleteDxByKey(key: string): Promise<void> {
     const dxRow = await this.dxTable.get(key) as unknown as ItfDixieGunTable<ItfRow>
     dxRow.deleted = true
+    
     await this.put(dxRow, key)
   }
 
   async delete(key: string): Promise<void> {
     await this.deleteDxByKey(key)
-    this.gunTableDataStore.get(key).put({ deleted: true, lastModeified: uuidv4() })
+    this.gunTableDataStore.get(key).put({ sessionId: this.sessionId, deleted: true, lastModeified: uuidv4() })
 
   }
 
   async doSyncGunToDexie(row: ItfDixieGunTable<ItfRow>, key: string): Promise<void> {
-    if ((row).sessionId === this.sessionId) { return; }
-
-    const dxRow = await this.dxTable.get(row.oid) as unknown as ItfDixieGunTable<ItfRow>
+    if (row.sessionId === this.sessionId) { return; }
+    
+    const decryptedRow = await this.gunEveryoneGroup.readDatarow(row as unknown as { [id: string]: string; }) as unknown as ItfDixieGunTable<ItfRow>
+    
+    const dxRow = await this.dxTable.get(decryptedRow.oid) as unknown as ItfDixieGunTable<ItfRow>
     if (!dxRow) {
-      await this.put(row, key, true)
+      await this.put(decryptedRow, key, true)
       return;
     }
-    if (row.lastModeified !== dxRow.lastModeified) {
-      await this.put(row, key, true)
+    if (decryptedRow.lastModeified !== dxRow.lastModeified) {
+      await this.put(decryptedRow, key, true)
       return;
     }
   }
@@ -146,10 +126,5 @@ export class GunDexieTable<ItfRow> {
 
   }
 
-  syncGunToDexie(): void {
-    this.gunTableDataStore.map(async (row: ItfDixieGunTable<ItfRow>, key: string) => {
 
-      this.doSyncGunToDexie(row, key)
-    });
-  }
 }

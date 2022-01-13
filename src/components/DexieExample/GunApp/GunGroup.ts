@@ -1,5 +1,5 @@
 import { GunAuth } from "./GunAuth"
-import { getOnce, gunGetType, putOnce } from "./GunHelper"
+import { getOnce, gunGetType } from "./GunHelper"
 import { SEA } from "gun";
 import { IGunCryptoKeyPair } from "gun/types/types";
 require("gun/sea");
@@ -15,16 +15,8 @@ export class GunGroup {
 
   private users: { epub: string; eGroupPrvKey: string; }[] = []
   
-
-  private _pub = ""
-  private get pub(): string {
-    return this._pub
-  }
-
   private _priv = ""
-  private get priv(): string {
-    return this._priv
-  }
+  isUserCanAccessGroup=false
 
   constructor(groupStore: ReturnType<typeof gunGetType>, gunAuth: GunAuth, encryptedFields: string[]) {
     this.groupStore = groupStore
@@ -49,7 +41,7 @@ export class GunGroup {
     if (!this.gunAuth.pair) { throw new Error("No epub to encrypt group data to") }
     const eGroupPrvKey = await this.gunAuth.encryptAsym(groupPair.priv, this.gunAuth.pair.epub)
     this.users = [{ epub: this.gunAuth.pair.epub, eGroupPrvKey: eGroupPrvKey }]
-    await putOnce(this.groupStore, {
+    this.groupStore.put( {
       challange: this.challange,
       challangeEnc: this.challangeEnc,
       users: JSON.stringify(this.users)
@@ -63,22 +55,62 @@ export class GunGroup {
     } else {
       await this.createGroupParams()
     }
+    
+    this.isUserCanAccessGroup =await this.canUserAccessGroup()  
   }
 
-  async encrypt(data: string): Promise<unknown> {
+  async readDatarow(datarowByRef: { [id: string]: string; }): Promise<{ [id: string]: string; }>{
+    const datarow={...datarowByRef}
+    for (let i=0;i<this.encryptedFields.length;i++){
+      const field=this.encryptedFields[i]
+      if (Object.keys(datarow).indexOf(field) === -1) {continue}
+      if (this.isUserCanAccessGroup){
+        const dec = await this.decrypt(datarow[field]) as string
+        try {
+          datarow[field]=JSON.parse(dec)
+        } catch{
+          datarow[field]=dec
+        }
+        
+      } else {
+        datarow[field]="#####"
+      }      
+    }  
+    
+    return datarow;  
+  }
+
+  async writeDatarow(datarowByRef: { [id: string]: string; }): Promise<{ [id: string]: string; }>{
+    const datarow={...datarowByRef}
+    for (let i=0;i<this.encryptedFields.length;i++){
+      const field=this.encryptedFields[i]
+      if (Object.keys(datarow).indexOf(field) === -1) {continue}
+      if (this.isUserCanAccessGroup){
+        const s=JSON.stringify(datarow[field])
+        datarow[field]=await this.encrypt(s) as string
+      } else {
+        delete datarow[field]
+      }
+    }
+
+    return datarow;
+  }  
+
+  private async encrypt(data: string): Promise<unknown> {
     return await SEA.encrypt(data, this._priv)
   }
 
-  async decrypt(data: string): Promise<unknown> {
+  private async decrypt(data: string): Promise<unknown> {
     return await SEA.decrypt(data, this._priv)
   }
 
-  async canUserAccessGroup(): Promise<boolean> {
+  private async canUserAccessGroup(): Promise<boolean> {
     if (!this.gunAuth.pair) { throw new Error("No epub to decrypt group data to"); }
     const user = this.users.filter((row) => { return row.epub = (this.gunAuth.pair as IGunCryptoKeyPair).epub })[0]
     if (!user) { throw new Error("User not in group") }
     this._priv = await this.gunAuth.decryptAsym(user.eGroupPrvKey, user.epub)
     const challangeExpected = await this.decrypt(this.challangeEnc)
+
     if (challangeExpected === this.challange) {
       return true
     } else {
