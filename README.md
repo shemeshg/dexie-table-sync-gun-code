@@ -1,9 +1,23 @@
-# dexie-sync-orbitdb
+# dexie-table-sync-gun
 
-Sync dixie to Orbitdb
+Sync dixie table to Gun
 
-Deployed to:
-https://ipfs.io/ipfs/QmUDe5q8CnUdsaBAjN1Cg2db883utq3MjRHD5fB6ki6cM6/#/DiexieExample
+```
+import { GunApp } from "./GunApp/GunApp"
+export const gunApp=new GunApp("UnqueAppId128")
+await gunApp.gunAuth.gunAuthUser(gunStoreUser,gunStorePassword)
+//dexie table: friends, encrypted fields: ["name"] 
+const dexieGunFriends = gunApp.createStore<Friend>("friends", db.friends, [
+      "name",
+    ]);
+await dexieGunFriends.setCallback(
+        async (row: ItfDixieGunTable<Friend>, key: string) => {          
+          refreshListvie(); // refresh UI
+        },
+        this //Context to bind
+      );
+
+```
 
 
 ## Project setup
