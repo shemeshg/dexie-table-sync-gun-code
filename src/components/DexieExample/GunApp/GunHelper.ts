@@ -7,6 +7,8 @@ export function gunGetType(){
 }
 
 
+
+
 export function getOnce(gunGet: ReturnType<typeof Gun>): Promise<unknown> {
   return new Promise((resolve) => {
     gunGet
@@ -16,6 +18,14 @@ export function getOnce(gunGet: ReturnType<typeof Gun>): Promise<unknown> {
   });
 }
 
+/**
+ * @function delay Delays the execution of an action.
+ * @param {number} time The time to wait in seconds.
+ * @returns {Promise<void>}
+ */
+ export function delay(time: number): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, time * 1000));
+}
 
 export function putOnce(gunGet: ReturnType<typeof Gun>, data: Partial<unknown>): Promise<unknown> {
   return new Promise((resolve) => {
