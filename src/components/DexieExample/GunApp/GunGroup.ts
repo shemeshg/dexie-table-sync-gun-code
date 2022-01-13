@@ -1,6 +1,7 @@
 import { GunAuth } from "./GunAuth"
 import {gunGetType} from "./GunHelper"
 import {SEA} from "gun";
+import { IGunCryptoKeyPair } from "gun/types/types";
 require("gun/sea");
 
 
@@ -16,7 +17,7 @@ export class GunGroup{
   readonly challange="challange"
   challangeEnc=""
 
-  users: {pub: string;eGroupPrvKey: string;}[]=[]
+  users: {epub: string;eGroupPrvKey: string;}[]=[]
 
   private _pub=""
   get pub(): string{
@@ -40,8 +41,9 @@ export class GunGroup{
       if (!groupPair){throw new Error("Could not create group pair")}
       this._priv = groupPair.priv
       this.challangeEnc=await this.encrypt(this.challange) as string
-      const eGroupPrvKey=await this.gunAuth.encrypt(groupPair.priv) 
-      this.users=[{pub: this.gunAuth.pub, eGroupPrvKey: eGroupPrvKey}]    
+      if (!this.gunAuth.pair){throw new Error("No epub to encrypt group data to")}
+      const eGroupPrvKey=await this.gunAuth.encryptAsym(groupPair.priv, this.gunAuth.pair.epub) 
+      this.users=[{epub: this.gunAuth.pair.epub, eGroupPrvKey: eGroupPrvKey}]    
   }
 
   async encrypt(data: string): Promise<unknown>{
@@ -53,9 +55,10 @@ export class GunGroup{
   }
 
   async canUserAccessGroup(): Promise<boolean>{
-    const user=this.users.filter((row)=>{return row.pub= this.gunAuth.pub})[0]
+    if (!this.gunAuth.pair){throw new Error("No epub to decrypt group data to");}
+    const user=this.users.filter((row)=>{return row.epub= (this.gunAuth.pair as IGunCryptoKeyPair).epub})[0]
     if (!user){throw new Error("User not in group")}
-    this._priv  = await this.gunAuth.decrypt(user.eGroupPrvKey)
+    this._priv  = await this.gunAuth.decryptAsym(user.eGroupPrvKey, user.epub)
     const challangeExpected = await this.decrypt(this.challangeEnc)
     if (challangeExpected === this.challange){      
       return true

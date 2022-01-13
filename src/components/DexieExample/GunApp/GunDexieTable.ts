@@ -107,7 +107,6 @@ export class GunDexieTable<ItfRow> {
 
   private async deleteDxByKey(key: string): Promise<void> {
     const dxRow = await this.dxTable.get(key) as unknown as ItfDixieGunTable<ItfRow>
-    debugger;
     dxRow.deleted = true
     await this.put(dxRow, key)
   }

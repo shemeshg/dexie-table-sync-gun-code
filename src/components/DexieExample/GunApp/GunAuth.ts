@@ -1,4 +1,5 @@
 import Gun, {SEA} from "gun";
+import { IGunCryptoKeyPair } from "gun/types/types";
 require("gun/sea");
 
 
@@ -9,34 +10,36 @@ function gunUserType(){
 export class GunAuth {
   gun: ReturnType<typeof Gun>
   user:  ReturnType<typeof gunUserType>
-  private _priv=""
-  private _pub=""
+  private _pair?: IGunCryptoKeyPair
+
 
   constructor( gun: ReturnType<typeof Gun>){
     this.gun = gun
     this.user = gun.user().recall({ sessionStorage: true });    
   }
 
-  get priv(): string{
-    return this._priv
+  get pair(): IGunCryptoKeyPair | undefined{
+    return this._pair
   }
 
-  get pub(): string{
-    return this._pub
-  }
+
 
   get isLoggedIn(): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this.user as any).is !== undefined
   }
 
-  async decrypt(data: string):Promise<string>{
-    const str=await SEA.decrypt(data, this.priv) as string
+  async decryptAsym(data: string, epub: string):Promise<string>{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sea:any = SEA
+    const str=sea.decrypt(data, await sea.secret(epub, this.pair)) as string; 
     return str
   }
 
-  async encrypt(data: string):Promise<string>{
-    const str=await SEA.encrypt(data, this.priv)
+  async encryptAsym(data: string, epubEncryptFor: string):Promise<string>{
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sea:any = SEA
+    const str=await SEA.encrypt(data, await sea.secret(epubEncryptFor, this.pair));
     return str
   }
 
@@ -77,8 +80,8 @@ export class GunAuth {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = await this._gunAuthUser(username,password) as any
     debugger;
-    this._priv = user.sea.priv
-    this._pub = user.sea.pub
+    this._pair = user.sea
+
     return user;
 
   }
