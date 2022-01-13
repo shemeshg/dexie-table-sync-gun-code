@@ -16,16 +16,16 @@ export type ItfDixieGunTable<T> = T & {
 };
 
 export class GunDexieTable<ItfRow> {
-  gun: ReturnType<typeof Gun>
+  
 
   dxTable: Dexie.Table<ItfDixieGunTable<ItfRow>, string>
-  gunTableDataStore: ReturnType<typeof gunGetType>
-  gunGroupStore: ReturnType<typeof gunGetType>
-  gunEveryoneGroup: GunGroup
+  private gunTableDataStore: ReturnType<typeof gunGetType>
+  private gunGroupStore: ReturnType<typeof gunGetType>
+  private gunEveryoneGroup: GunGroup
 
-  sessionId = uuidv4()
+  private sessionId = uuidv4()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  callnack = (row: ItfDixieGunTable<ItfRow>, idx: string): void => { return; }
+  private callnack = (row: ItfDixieGunTable<ItfRow>, idx: string): void => { return; }
   lastModifiedNotifications: string[] = []
 
   constructor(txTable: Dexie.Table<ItfRow, string>, gunStore: ReturnType<typeof gun.get>,
@@ -34,7 +34,7 @@ export class GunDexieTable<ItfRow> {
       this.gunTableDataStore = gunStore.get("data")
       this.gunGroupStore = gunStore.get("group")
       this.gunEveryoneGroup = new GunGroup(this.gunGroupStore, user)      
-      this.gun = gun
+
   
     }
 

@@ -6,26 +6,21 @@ require("gun/sea");
 
 
 export class GunGroup{
-  /*
-  pubKey = "****"
-  pubKeyEncBySelf = "***"
-  users = [{userPubKey: "user1:", groupPrvKeyEncByUser: "*******"}]  
-  */
   encryptFields: string[] = ["title"]
-  groupStore: ReturnType<typeof gunGetType>
-  gunAuth: GunAuth
+  private  groupStore: ReturnType<typeof gunGetType>
+  private gunAuth: GunAuth
   readonly challange="challange"
-  challangeEnc=""
+  private challangeEnc=""
 
-  users: {epub: string;eGroupPrvKey: string;}[]=[]
+  private users: {epub: string;eGroupPrvKey: string;}[]=[]
 
   private _pub=""
-  get pub(): string{
+  private get pub(): string{
     return this._pub
   }
 
   private _priv=""
-  get priv(): string{
+  private get priv(): string{
     return this._priv
   }
 

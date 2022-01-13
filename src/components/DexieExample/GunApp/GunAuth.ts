@@ -7,15 +7,22 @@ function gunUserType(){
   return Gun().user()
 }
 
+const gunSeaToken="gunSeaToken"
+
 export class GunAuth {
-  gun: ReturnType<typeof Gun>
-  user:  ReturnType<typeof gunUserType>
+  private gun: ReturnType<typeof Gun>
+  private user:  ReturnType<typeof gunUserType>
   private _pair?: IGunCryptoKeyPair
 
 
   constructor( gun: ReturnType<typeof Gun>){
     this.gun = gun
-    this.user = gun.user().recall({ sessionStorage: true });    
+    this.user = gun.user().recall({ sessionStorage: true });   
+    if(this.isLoggedIn){
+      this._pair = JSON.parse(localStorage.getItem(gunSeaToken) as string)
+    } else {
+      localStorage.removeItem(gunSeaToken)
+    }
   }
 
   get pair(): IGunCryptoKeyPair | undefined{
@@ -26,7 +33,7 @@ export class GunAuth {
 
   get isLoggedIn(): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.user as any).is !== undefined
+    return (this.user as any).is !== undefined    
   }
 
   async decryptAsym(data: string, epub: string):Promise<string>{
@@ -81,7 +88,7 @@ export class GunAuth {
     const user = await this._gunAuthUser(username,password) as any
     debugger;
     this._pair = user.sea
-
+    localStorage.setItem(gunSeaToken, JSON.stringify(this._pair))
     return user;
 
   }
