@@ -15,7 +15,7 @@ import FriendAdder from "@/components/DexieExample/FriendAdder.vue"; // @ is an 
 import { defineComponent, ref, onMounted, Ref } from "vue";
 import { ItfDixieGunTable } from "./GunApp/GunDexieTable";
 
-import { gunApp } from "./GunApp/GunHelper";
+import { gunApp } from "./GunApp";
 import { Friend, db } from "./db";
 
 export default defineComponent({
