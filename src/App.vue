@@ -11,7 +11,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
-import { ipfsRepo } from "@/components/DexieExample/IpfsOrbitRepo"
+
 
 export default defineComponent({
   name: "Home",
@@ -19,7 +19,6 @@ export default defineComponent({
   setup() {
     const ipfsLoaded=ref(false)
     const doOnMounted = async () => {
-       await ipfsRepo.doConnect();
        ipfsLoaded.value=true
     };
     onMounted(doOnMounted);

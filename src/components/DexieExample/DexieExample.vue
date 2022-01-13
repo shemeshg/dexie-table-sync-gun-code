@@ -34,7 +34,7 @@
 import FriendsList from "@/components/DexieExample/FriendsList.vue"; // @ is an alias to /src
 import { defineComponent, ref, onMounted } from "vue";
 
-import {gunApp} from "./GunApp/GunHelper"
+import {gunApp} from "./GunApp"
 
 export default defineComponent({
   props: {},
