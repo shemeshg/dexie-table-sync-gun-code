@@ -56,23 +56,30 @@ export class GunDexieTable<ItfRow> {
     await this.gunEveryoneGroup.createGroupKeys()
     const canUserAccessGroup =await this.gunEveryoneGroup.canUserAccessGroup()    
     console.log(canUserAccessGroup)  
-    
+    const ecryptedFields=this.gunEveryoneGroup.encryptFields
+
     //write example
     const datarow: { [id: string]: string; }={"shalom":"98",title:"wqe"}
+    for (let i=0;i<ecryptedFields.length;i++){
+      const field=ecryptedFields[i]
+      if (canUserAccessGroup){
+        datarow[field]=await this.gunEveryoneGroup.encrypt(datarow[field]) as string
+      } else {
+        delete datarow[field]
+      }
+    }
     debugger;
-
     //Read example    
-    const ecryptedFields=this.gunEveryoneGroup.encryptFields
+    
     for (let i=0;i<ecryptedFields.length;i++){
       const field=ecryptedFields[i]
       if (canUserAccessGroup){
         datarow[field]=await this.gunEveryoneGroup.decrypt(datarow[field]) as string
       } else {
         datarow[field]="#####"
-      }
-      
+      }      
     }
-    
+    debugger;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
