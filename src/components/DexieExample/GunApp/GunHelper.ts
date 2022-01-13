@@ -42,10 +42,10 @@ export class GunApp {
     this.gunAuth = new GunAuth(this.gun)
   }
 
-  createStore<T>(storeName: string, txTable: Dexie.Table<T, string>): GunDexieTable<T>{
+  createStore<T>(storeName: string, txTable: Dexie.Table<T, string>, encryptedFields: string[]): GunDexieTable<T>{
     const tbStore = this.gun.get(this.applicationUnqueId).get(storeName);    
 
-    const dexieGunFriends = new GunDexieTable<T>(txTable, tbStore,this.gun, this.gunAuth);
+    const dexieGunFriends = new GunDexieTable<T>(txTable, tbStore,this.gun, this.gunAuth, encryptedFields);
     
     return dexieGunFriends;
   }

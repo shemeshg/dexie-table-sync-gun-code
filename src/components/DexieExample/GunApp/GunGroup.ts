@@ -6,7 +6,7 @@ require("gun/sea");
 
 
 export class GunGroup {
-  encryptFields: string[] = ["title"]
+  encryptedFields: string[] 
   private groupStore: ReturnType<typeof gunGetType>
   private gunAuth: GunAuth
 
@@ -14,6 +14,7 @@ export class GunGroup {
   private challange = ""
 
   private users: { epub: string; eGroupPrvKey: string; }[] = []
+  
 
   private _pub = ""
   private get pub(): string {
@@ -25,9 +26,10 @@ export class GunGroup {
     return this._priv
   }
 
-  constructor(groupStore: ReturnType<typeof gunGetType>, gunAuth: GunAuth) {
+  constructor(groupStore: ReturnType<typeof gunGetType>, gunAuth: GunAuth, encryptedFields: string[]) {
     this.groupStore = groupStore
     this.gunAuth = gunAuth
+    this.encryptedFields = encryptedFields
   }
 
   private async readGroupParamsFromStore() {

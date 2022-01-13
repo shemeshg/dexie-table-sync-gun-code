@@ -29,11 +29,11 @@ export class GunDexieTable<ItfRow> {
   lastModifiedNotifications: string[] = []
 
   constructor(txTable: Dexie.Table<ItfRow, string>, gunStore: ReturnType<typeof gun.get>,
-    gun: ReturnType<typeof Gun>, user: GunAuth) {
+    gun: ReturnType<typeof Gun>, user: GunAuth, encryptedFields: string[]) {
       this.dxTable = txTable as unknown as Dexie.Table<ItfDixieGunTable<ItfRow>, string>
       this.gunTableDataStore = gunStore.get("data")
       this.gunGroupStore = gunStore.get("group")
-      this.gunEveryoneGroup = new GunGroup(this.gunGroupStore, user)      
+      this.gunEveryoneGroup = new GunGroup(this.gunGroupStore, user, encryptedFields)      
 
   
     }
@@ -56,7 +56,7 @@ export class GunDexieTable<ItfRow> {
     await this.gunEveryoneGroup.initGroup()
     const canUserAccessGroup =await this.gunEveryoneGroup.canUserAccessGroup()    
     console.log(canUserAccessGroup)  
-    const ecryptedFields=this.gunEveryoneGroup.encryptFields
+    const ecryptedFields=this.gunEveryoneGroup.encryptedFields
 
     //write example
     const datarow: { [id: string]: string; }={"shalom":"98",title:"wqe"}
