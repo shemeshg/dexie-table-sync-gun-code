@@ -7,11 +7,8 @@ https://shemeshg.github.io/dexie-table-sync-gun/
 ```
 import { GunApp } from "./GunApp/GunApp"
 export const gunApp=new GunApp("UnqueAppId128")
-await gunApp.gunAuth.gunAuthUser(gunStoreUser,gunStorePassword)
-//dexie table: friends, encrypted fields: ["name"] 
-const dexieGunFriends = gunApp.createStore<Friend>("friends", db.friends, [
-      "name",
-    ]);
+
+const dexieGunFriends = gunApp.createStore<Friend>("friends", db.friends);
 await dexieGunFriends.setCallback(
         async (row: ItfDixieGunTable<Friend>, key: string) => {          
           refreshListvie(); // refresh UI
