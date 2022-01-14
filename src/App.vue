@@ -1,12 +1,10 @@
 <template>
-  <div id="nav" v-if="ipfsLoaded">
+  <div id="nav">
     <router-link to="/">DiexieExample</router-link> |
     <router-link to="/about">About</router-link>
   </div>
-  <div  v-if="!ipfsLoaded">
-    Loading IPFS
-  </div>
-  <router-view v-if="ipfsLoaded" />
+
+  <router-view />
 </template>
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
@@ -16,12 +14,7 @@ export default defineComponent({
   name: "Home",
   components: {},
   setup() {
-    const ipfsLoaded=ref(false)
-    const doOnMounted = async () => {
-       ipfsLoaded.value=true
-    };
-    onMounted(doOnMounted);
-    return {ipfsLoaded};
+    //
   },
 });
 </script>

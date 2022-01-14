@@ -29,9 +29,7 @@ export default defineComponent({
 
     const frendslistAry: Ref<ItfDixieGunTable<Friend>[]> = ref([]);
 
-    const dexieGunFriends = gunApp.createStore<Friend>("friends", db.friends, [
-      "name",
-    ]);
+    const dexieGunFriends = gunApp.createStore<Friend>("friends", db.friends);
 
     const refreshListvie = async () => {
       frendslistAry.value = await dexieGunFriends.dxTable.toArray();

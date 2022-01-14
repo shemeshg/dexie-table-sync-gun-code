@@ -1,24 +1,20 @@
 <template>
-  <p v-if="!isIpfsReady">Loading IPFS...</p>
-  <div v-if="isIpfsReady">
+  <div>
     <p>Status {{ syncUrl }}</p>
-    <button v-if="isSyncDefined" @click="doLogout">Logout gun</button>
-    <div v-if="!isSyncDefined">
-      User name:
-      <input type="text" v-if="!isSyncDefined" v-model="gunStoreUser" />
-      Password:
-      <input type="text" v-if="!isSyncDefined" v-model="gunStorePassword" />
+    <div >
+      Application Id:
+      <input type="text"  v-model="gunApplicationId" :readonly="isSyncDefined" />
+      <p> Start application, with same AppId in two different browsers </p>
     </div>
-    <button v-if="!isSyncDefined" @click="doAuthenticate">
-      Login and sync Gun
-    </button>
-    <button v-if="!isSyncDefined" @click="doRegisterUser">
-      Register new user
-    </button>
+    <button v-if="!isSyncDefined" @click="doStart">
+      Start 
+    </button>   
     <div v-if="isSyncDefined">
       <p>
-        If you want to recreate the Gun Store, or import astore just created new
-        store
+        If you want to recreate the Gun Store, or import astore from local table        
+      </p>
+      <p>
+        The sync from Gun connected store to Dexie is Auto
       </p>
       <p>
         <button @click="importCurrentDixieTableToGun">
@@ -32,9 +28,9 @@
 </template>
 <script lang="ts">
 import FriendsList from "@/components/DexieExample/FriendsList.vue"; // @ is an alias to /src
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref } from "vue";
 
-import {gunApp} from "./GunApp"
+import {setGunApp} from "./GunApp"
 
 export default defineComponent({
   props: {},
@@ -42,66 +38,25 @@ export default defineComponent({
   setup() {    
 
     const friendsListRef = ref();
-    const isIpfsReady = ref(false);
     const isSyncDefined = ref(false);
-    const syncUrl = ref("");
-    const gunStoreUser = ref("");
-    const gunStorePassword = ref("");
-    const doOnMounted = async () => {
-      isSyncDefined.value = gunApp.gunAuth.isLoggedIn;
-      isIpfsReady.value = true;
-    };
+  
+    const gunApplicationId = ref("");
+  
 
-    const doLogout = async () => {
-      gunApp.gunAuth.gunLogout();
-      isSyncDefined.value = false;
-    };
-
-    const doAuthenticate = async () => {
-
-      try {
-        (await gunApp.gunAuth.gunAuthUser(
-          gunStoreUser.value,
-          gunStorePassword.value
-        )) as string;
-        syncUrl.value = "User authenticated";
-      } catch (e) {
-        syncUrl.value = e as string;
-        return;
-      }
-
-      isSyncDefined.value = true;
-      syncUrl.value = "";
+    const doStart = async () => {
+      setGunApp(gunApplicationId.value)
+      isSyncDefined.value=true
     };
     const importCurrentDixieTableToGun = async () => {
       friendsListRef.value.importCurrentDixieTableToGun();
     };
 
-    const doRegisterUser = async () => {
-      try {
-        (await gunApp.gunAuth.gunRegisterUser(
-          gunStoreUser.value,
-          gunStorePassword.value
-        )) as string;
-        syncUrl.value = "User created, please login";
-      } catch (e) {
-        syncUrl.value = e as string;
-        return;
-      }
-    };
-    onMounted(doOnMounted);
-
     return {
       isSyncDefined,
-      doLogout,
-      doAuthenticate,
-      syncUrl,
-      gunStoreUser,
-      isIpfsReady,
+      doStart,
+      gunApplicationId,
       importCurrentDixieTableToGun,
       friendsListRef,
-      gunStorePassword,
-      doRegisterUser,
     };
   },
 });
